@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>4-Directional Character Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            width: 960px;
+            height: 540px;
+            border: 1px solid black;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            background: url(map.png);
+        }
+
+        #button-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #direction-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        button {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 100%;
+            background-color: #ccc;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            opacity: 0.6;
+            font-weight: 900;
+            font-size: 24px;
+        }
+
+        button:hover {
+            background-color: #aaa;
+        }
+
+        #arrow-up {
+            margin-bottom: -15px;
+        }
+
+        #arrow-left,
+        #arrow-right {
+            margin: 0 10px;
+        }
+
+        #arrow-down {
+            margin-top: -15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="960" height="540"></canvas>
+    </div>
+    <div id="button-container">
+        <div id="direction-buttons">
+            <button id="arrow-up">↑</button>
+            <div style="display: flex; justify-content: space-between;">
+                <button id="arrow-left">←</button>
+                <button id="arrow-right">→</button>
+            </div>
+            <button id="arrow-down">↓</button>
+        </div>
+        <button id="attack-button">⚔️</button>
+        <!-- <button id="pick-up-button">✋️</button> -->
+    </div>
+    
+    <script>
+
+
+       // Get the canvas element
+let canvas = document.getElementById('game-canvas');
+let ctx = canvas.getContext('2d');
+
+// Load the character sprite sheet
+let characterImage = new Image();
+characterImage.src = 'character.png';
+characterImage.onload = function () {
+  // Initialize the game state
+  let characterWidth = characterImage.width; // Get the actual image width
+  let characterHeight = characterImage.height; // Get the actual image height
+  let characterFrames = 16; // Number of frames (16 directions)
+  let frameWidth = characterWidth / 4; // Width of each frame
+  let frameHeight = characterHeight / 4; // Height of each frame
+  let characterX = canvas.width / 2; // Initial x position
+  let characterY = canvas.height / 2; // Initial y position
+  let frameIndex = 0; // Current frame index
+  let direction = 0; // Current direction (0-3)
+  let speed = 5; // Movement speed
+
+  // Add event listeners to the buttons
+  document.getElementById('arrow-up').addEventListener('click', () => {
+    direction = 3; // Up
+    handleMove(characterX, characterY);
+  });
+
+  document.getElementById('arrow-down').addEventListener('click', () => {
+    direction = 0; // Down
+    handleMove(characterX, characterY);
+  });
+
+  document.getElementById('arrow-left').addEventListener('click', () => {
+    direction = 1; // Left
+    handleMove(characterX, characterY);
+  });
+
+  document.getElementById('arrow-right').addEventListener('click', () => {
+    direction = 2; // Right
+    handleMove(characterX, characterY);
+  });
+
+
+  document.getElementById('attack-button').addEventListener('click', () => {
+    handleAttack(characterX, characterY);
+});
+
+function handleAttack(x, y) {
+    // Play a sound effect
+    let soundEffect = new Audio('attack_sound.wav'); // replace with your sound effect file
+    soundEffect.play();
+
+    // Create an animation using the effect.png image
+    let effectImage = new Image();
+    effectImage.src = 'effect.png';
+    effectImage.onload = function () {
+        let frameWidth = 960 / 5; // 192
+        let frameHeight = 1819 / 9; // 202
+        let frameIndex = 0;
+        let animationInterval = setInterval(() => {
+            ctx.drawImage(effectImage,
+                (frameIndex % 5) * frameWidth,
+                Math.floor(frameIndex / 5) * frameHeight,
+                frameWidth, frameHeight,
+                x, y, frameWidth, frameHeight);
+            frameIndex++;
+            if (frameIndex >= 45) {
+                clearInterval(animationInterval);
+            }
+        }, 1000 / 60); // 60fps
+    };
+}
+
+
+
+  // Define the handleMove function
+  function handleMove(x, y) {
+    // Update the character position
+    switch (direction) {
+      case 0: // Down
+        characterY += speed;
+        break;
+      case 1: // Left
+        characterX -= speed;
+        break;
+      case 2: // Right
+        characterX += speed;
+        break;
+      case 3: // Up
+        characterY -= speed;
+        break;
+    }
+
+    // Keep the character within the canvas bounds
+    characterX = Math.max(0, Math.min(characterX, canvas.width - frameWidth));
+    characterY = Math.max(0, Math.min(characterY, canvas.height - frameHeight));
+  }
+
+  // Load the monster sprite sheet
+  let monsterImage = new Image();
+  monsterImage.src = 'mon.png';
+  monsterImage.onload = function () {
+// Define the Monster constructor
+function Monster(x, y, direction, speed) {
+  this.x = x;
+  this.y = y;
+  this.direction = direction;
+  this.speed = speed;
+  this.frameIndex = 0;
+  this.frameWidth = 145 / 4; // 145 pixels wide, divided by 4 frames per direction
+  this.frameHeight = 160 / 4; // 160 pixels high, divided by 4 frames per direction
+  this.timer = 0; // add a timer property
+  this.changeDirectionTimer = 0; // add a timer for changing direction
+}
+
+// Add Monster properties and methods
+Monster.prototype.update = function () {
+  // Update the monster's direction and position
+  switch (this.direction) {
+    case 0: // Down
+      this.y += this.speed;
+      break;
+    case 1: // Left
+      this.x -= this.speed;
+      break;
+    case 2: // Right
+      this.x += this.speed;
+      break;
+    case 3: // Up
+      this.y -= this.speed;
+      break;
+  }
+
+  // Keep the monster within the canvas bounds
+  this.x = Math.max(0, Math.min(this.x, canvas.width - this.frameWidth));
+  this.y = Math.max(0, Math.min(this.y, canvas.height - this.frameHeight));
+
+  // Update the timer
+  this.timer += 1 / 60; // increment the timer by 1/60th of a second
+
+  // Change direction randomly every second
+  this.changeDirectionTimer += 1 / 60; // increment the timer by 1/60th of a second
+  if (this.changeDirectionTimer >= 1) {
+    this.changeDirectionTimer = 0;
+    let randomDirection = Math.floor(Math.random() * 4); 
+      this.direction = randomDirection; // set direction to 0-3
+  }
+
+  // If staying still, don't move
+  if (this.direction === -1) {
+    this.x = this.x;
+    this.y = this.y;
+  }
+  // Update the frame index
+  this.timer += 1 / 60; // increment the timer by 1/60th of a second
+  if (this.timer >= 1) {
+    this.timer = 0;
+    this.frameIndex = (this.frameIndex + 1) % 4;
+  }
+};
+
+    Monster.prototype.draw = function () {
+      // Draw the monster
+      ctx.drawImage(monsterImage,
+        this.frameIndex * this.frameWidth,
+        this.direction * this.frameHeight,
+        this.frameWidth, this.frameHeight,
+        this.x, this.y, this.frameWidth, this.frameHeight);
+    };
+
+// Create an array of monsters
+let monsters = [];
+
+// Spawn 5 monsters at random positions
+for (let i = 0; i < 9; i++) {
+  let randomX = Math.floor(Math.random() * (canvas.width - monsterImage.width / 4));
+  let randomY = Math.floor(Math.random() * (canvas.height - monsterImage.height / 4));
+  let randomDirection = Math.floor(Math.random() * 4);
+  let randomSpeed = Math.floor(Math.random() * 3) + 1;
+  monsters.push(new Monster(randomX, randomY, randomDirection, randomSpeed / 4)); // reduce speed
+}
+    // Define the update function
+    function update() {
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw each monster
+      for (let i = 0; i < monsters.length; i++) {
+        monsters[i].update();
+        monsters[i].draw();
+      }
+
+      // Draw the character
+      ctx.imageSmoothingEnabled = false; // Turn off image smoothing
+      ctx.drawImage(characterImage,
+        frameIndex * frameWidth,
+        direction * frameHeight,
+        frameWidth, frameHeight,
+        characterX, characterY, frameWidth, frameHeight);
+
+      // Update the frame index
+      frameIndex = (frameIndex + 1) % 4;
+
+      // Request the next frame
+      requestAnimationFrame(update);
+    }
+
+    // Start the game loop
+    update();
+  };
+};
+    </script>
+</body>
+
+</html>
