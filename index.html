@@ -283,6 +283,11 @@ for (let i = 0; i < 9; i++) {
   let randomSpeed = Math.floor(Math.random() * 3) + 1;
   monsters.push(new Monster(randomX, randomY, randomDirection, randomSpeed / 4)); // reduce speed
 }
+
+
+let frameTimer = 0;
+let frameDelay = 6; // adjust this value to change the frame rate
+
     // Define the update function
     function update() {
       // Clear the canvas
@@ -302,9 +307,11 @@ for (let i = 0; i < 9; i++) {
         frameWidth, frameHeight,
         characterX, characterY, frameWidth, frameHeight);
 
-      // Update the frame index
-      frameIndex = (frameIndex + 1) % 4;
-
+        frameTimer += 1;
+  if (frameTimer >= frameDelay) {
+    frameTimer = 0;
+    frameIndex = (frameIndex + 1) % 4;
+  }
       // Request the next frame
       requestAnimationFrame(update);
     }
